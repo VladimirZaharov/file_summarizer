@@ -1,15 +1,16 @@
 # Document Summarizer
 
-A modular Python application that automatically summarizes documents from a folder using AI (OpenRouter API with free models).
+A modular Python application that automatically summarizes documents using AI (OpenRouter API with free models). Supports both local files and direct Google Drive URLs without downloading.
 
 ## Features
 
+- ✅ **Google Drive Integration**: Works with Google Drive URLs directly (no download needed)
 - ✅ **Universal File Support**: Handles multiple document types (PDF, DOCX, TXT, HTML, Excel, RTF, Markdown, CSV)
 - ✅ **Modular Architecture**: Easy to extend with new file parsers or LLM providers
 - ✅ **Free AI Models**: Uses OpenRouter's free tier models (no credit card required)
 - ✅ **Individual & Master Summaries**: Generates summaries for each document plus a comprehensive overview
 - ✅ **Detailed Reports**: JSON output with statistics and metadata
-- ✅ **Flexible Input**: Works with local folders or Google Drive links
+- ✅ **Two Methods**: Google Drive API method or direct URL method
 
 ## Installation
 
@@ -41,9 +42,56 @@ cp .env.example .env
 
 ## Usage
 
-### Quick Start
+### Method 1: Google Drive URL (Recommended)
 
-1. Place your documents in the `downloaded_files` folder (or create it):
+This method works directly with Google Drive URLs without downloading files.
+
+#### Quick Start with Google Drive
+
+```bash
+# Set your OpenRouter API key
+export OPENROUTER_API_KEY=your_key_here
+
+# Using Google Drive API (requires one-time setup)
+python summarize_gdrive.py --folder "https://drive.google.com/drive/folders/YOUR_FOLDER_ID"
+
+# OR using direct file IDs (for public files, no setup needed)
+python summarize_gdrive.py --file-ids FILE_ID1 FILE_ID2 FILE_ID3
+```
+
+#### Google Drive API Setup
+
+For private folders, you need to set up Google Drive API once:
+
+1. Get free OpenRouter API key from [OpenRouter](https://openrouter.ai/)
+2. Follow the [Google Drive Setup Guide](GDRIVE_SETUP.md) to get `credentials.json`
+3. Run the script - browser will open for authentication (one-time)
+4. Done! Future runs won't need authentication
+
+See detailed instructions in [`GDRIVE_SETUP.md`](GDRIVE_SETUP.md).
+
+#### Example: Practical Task
+
+For the folder: `https://drive.google.com/drive/folders/1x6EKNkVw6PlFVTr6cGrsVscmRuwqGrXd`
+
+```bash
+# Option 1: With Google Drive API
+python summarize_gdrive.py \
+    --folder "https://drive.google.com/drive/folders/1x6EKNkVw6PlFVTr6cGrsVscmRuwqGrXd" \
+    --credentials credentials.json \
+    --output task_summary.json
+
+# Option 2: If you know the file IDs and files are public
+python summarize_gdrive.py \
+    --file-ids FILE_ID1 FILE_ID2 FILE_ID3 \
+    --output task_summary.json
+```
+
+### Method 2: Local Files
+
+For local documents, use the traditional method:
+
+1. Place your documents in the `downloaded_files` folder:
 
 ```bash
 mkdir -p document_summarizer/downloaded_files

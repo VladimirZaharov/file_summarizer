@@ -15,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from document_summarizer.config import Config
 from document_summarizer.url_summarizer import URLSummarizer
+from document_summarizer.public_drive import PublicDriveParser
 
 
 def get_public_url(file_id: str) -> str:
@@ -133,6 +134,9 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
+  # From Google Drive folder URL (automatic)
+  python summarize_public.py --folder "https://drive.google.com/drive/folders/FOLDER_ID"
+  
   # Summarize files by IDs
   python summarize_public.py --file-ids ID1 ID2 ID3
   
@@ -140,7 +144,7 @@ Examples:
   python summarize_public.py --file-list file_ids.txt
   
   # With custom model and output
-  python summarize_public.py --file-ids ID1 ID2 --model google/gemini-flash-1.5:free --output summary.json
+  python summarize_public.py --folder "URL" --model google/gemini-flash-1.5:free --output summary.json
 
 How to get file IDs:
   1. Open Google Drive folder in browser
@@ -152,6 +156,12 @@ Setup:
   export OPENROUTER_API_KEY=your_key_here
   Get free key from: https://openrouter.ai/
         """
+    )
+    
+    parser.add_argument(
+        '--folder',
+        type=str,
+        help='Google Drive folder URL (for public folders)'
     )
     
     parser.add_argument(
@@ -190,7 +200,32 @@ Setup:
     # Get file IDs
     file_ids = []
     
-    if args.file_list:
+    if args.folder:
+        # Extract file IDs from public folder URL
+        print(f"Extracting file IDs from folder URL...")
+        parser_obj = PublicDriveParser()
+        
+        try:
+            files = parser_obj.get_files_from_public_folder(args.folder)
+            
+            if files:
+                file_ids = [f['id'] for f in files]
+                print(f"✓ Found {len(file_ids)} files in folder\n")
+            else:
+                print("\n⚠️  Could not automatically extract file IDs from folder.")
+                print("Please manually extract file IDs and use --file-ids or --file-list\n")
+                print("How to get file IDs:")
+                print("1. Open folder in browser")
+                print("2. Click on each file")
+                print("3. Copy ID from URL: https://drive.google.com/file/d/FILE_ID/view\n")
+                sys.exit(1)
+        
+        except Exception as e:
+            print(f"\n❌ Error accessing folder: {e}\n")
+            print("Make sure the folder is publicly accessible (Anyone with the link)\n")
+            sys.exit(1)
+    
+    elif args.file_list:
         file_list_path = Path(args.file_list)
         if not file_list_path.exists():
             print(f"\n❌ Error: File not found: {args.file_list}\n")
@@ -203,7 +238,7 @@ Setup:
         file_ids = args.file_ids
     
     else:
-        print("\n❌ Error: Must provide either --file-ids or --file-list\n")
+        print("\n❌ Error: Must provide either --folder, --file-ids, or --file-list\n")
         parser.print_help()
         sys.exit(1)
     

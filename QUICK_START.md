@@ -4,7 +4,21 @@
 
 ## Для публичных папок (БЕЗ авторизации)
 
-### Шаг 1: Получить File IDs
+### Метод 1: Автоматический (через URL папки)
+
+**САМЫЙ ПРОСТОЙ СПОСОБ** - просто укажите URL папки:
+
+```bash
+python summarize_public.py --folder "https://drive.google.com/drive/folders/1x6EKNkVw6PlFVTr6cGrsVscmRuwqGrXd"
+```
+
+Программа попытается автоматически извлечь все файлы из папки!
+
+### Метод 2: Ручной (через File IDs)
+
+Если автоматический метод не сработал:
+
+#### Шаг 1: Получить File IDs
 
 1. Откройте папку в браузере: https://drive.google.com/drive/folders/1x6EKNkVw6PlFVTr6cGrsVscmRuwqGrXd
 2. Кликните на каждый файл
@@ -40,7 +54,7 @@ pip install -r requirements.txt
 export OPENROUTER_API_KEY=your_key_here
 ```
 
-### Шаг 5: Запустить
+#### Шаг 5: Запустить
 
 ```bash
 # Из файла с IDs
@@ -54,6 +68,25 @@ python summarize_public.py \
     --file-list file_ids.txt \
     --model google/gemini-flash-1.5:free \
     --output my_summary.json
+```
+
+## Все способы запуска
+
+```bash
+# 1. АВТОМАТИЧЕСКИЙ - просто URL папки (рекомендуется!)
+python summarize_public.py --folder "https://drive.google.com/drive/folders/FOLDER_ID"
+
+# 2. Из файла с File IDs
+python summarize_public.py --file-list file_ids.txt
+
+# 3. Напрямую с File IDs
+python summarize_public.py --file-ids ID1 ID2 ID3
+
+# С опциями
+python summarize_public.py \
+    --folder "https://drive.google.com/drive/folders/FOLDER_ID" \
+    --model google/gemini-flash-1.5:free \
+    --output custom_summary.json
 ```
 
 ## Результат

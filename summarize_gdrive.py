@@ -13,6 +13,87 @@ from typing import List, Dict
 from document_summarizer.config import Config
 from document_summarizer.gdrive_client import GDriveClient, SimpleDriveClient
 from document_summarizer.url_summarizer import URLSummarizer
+from document_summarizer.public_drive import PublicDriveParser
+
+
+def summarize_from_public_folder(folder_url: str, api_key: str, model: str = None) -> Dict:
+    """
+    Summarize documents from public Google Drive folder (no authentication needed).
+    
+    Args:
+        folder_url: Google Drive folder URL
+        api_key: OpenRouter API key
+        model: Model to use for summarization
+        
+    Returns:
+        Summary report dict
+    """
+    print(f"\n{'='*60}")
+    print("GOOGLE DRIVE DOCUMENT SUMMARIZER (Public Folder)")
+    print(f"{'='*60}\n")
+    
+    # Initialize parser
+    parser = PublicDriveParser()
+    
+    # Try to get files from public folder
+    print(f"Accessing public folder: {folder_url}")
+    files = parser.get_files_from_public_folder(folder_url)
+    
+    if not files:
+        print("\n⚠️  Could not automatically extract files from folder.")
+        print("Please use --file-ids option with manual file IDs.")
+        return {}
+    
+    print(f"\nFound {len(files)} files")
+    
+    # Initialize URL summarizer
+    print(f"Initializing summarizer (Model: {model or Config.DEFAULT_MODEL})...")
+    summarizer = URLSummarizer(api_key=api_key, model=model)
+    
+    # Summarize each file
+    print(f"\n{'='*60}")
+    print("GENERATING SUMMARIES")
+    print(f"{'='*60}\n")
+    
+    summaries = []
+    for i, file in enumerate(files, 1):
+        print(f"[{i}/{len(files)}] Processing: {file['name']}")
+        
+        try:
+            summary = summarizer.summarize_document_url(
+                file_url=file['url'],
+                filename=file['name']
+            )
+            summaries.append(summary)
+            
+            if summary['summary_status'] == 'success':
+                print(f"  ✓ Summary generated")
+            else:
+                print(f"  ✗ {summary['summary']}")
+        
+        except Exception as e:
+            print(f"  ✗ Error: {e}")
+            summaries.append({
+                'filename': file['name'],
+                'url': file['url'],
+                'summary': f"Error: {e}",
+                'summary_status': 'error'
+            })
+    
+    # Generate master summary
+    print(f"\n{'='*60}")
+    print("GENERATING MASTER SUMMARY")
+    print(f"{'='*60}\n")
+    
+    report = summarizer.generate_structured_summary(summaries)
+    report['metadata'] = {
+        'generated_at': datetime.now().isoformat(),
+        'model_used': summarizer.model,
+        'folder_url': folder_url,
+        'method': 'public_folder_auto'
+    }
+    
+    return report
 
 
 def summarize_from_drive_api(folder_url: str, api_key: str, model: str = None, credentials_path: str = None) -> Dict:
